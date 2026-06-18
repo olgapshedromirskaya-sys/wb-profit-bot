@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WB · Реальная прибыль</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="topbar__title">
+        <span class="topbar__eyebrow">WB</span>
+        <span class="topbar__name">Реальная прибыль</span>
+      </div>
+      <button id="settingsBtn" class="icon-btn" aria-label="Настройки" type="button">⚙</button>
+    </header>
+
+    <main id="content" class="content" aria-live="polite"></main>
+
+    <div id="overlay" class="overlay hidden"></div>
+    <aside id="sheet" class="sheet hidden" aria-hidden="true"></aside>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
