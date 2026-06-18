@@ -1,0 +1,26 @@
+[
+  {
+    "nmID": 111111,
+    "statistics": {
+      "selectedPeriod": {"openCardCount": 3100, "addToCartCount": 410, "ordersCount": 167}
+    }
+  },
+  {
+    "nmID": 222222,
+    "statistics": {
+      "selectedPeriod": {"openCardCount": 5200, "addToCartCount": 980, "ordersCount": 247}
+    }
+  },
+  {
+    "nmID": 333333,
+    "statistics": {
+      "selectedPeriod": {"openCardCount": 1800, "addToCartCount": 60, "ordersCount": 28}
+    }
+  },
+  {
+    "nmID": 444444,
+    "statistics": {
+      "selectedPeriod": {"openCardCount": 40, "addToCartCount": 9, "ordersCount": 7}
+    }
+  }
+]
