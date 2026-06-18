@@ -1,0 +1,57 @@
+[
+  {
+    "nm_id": 111111,
+    "sa_name": "Куртка зимняя синяя M",
+    "doc_type_name": "Продажа",
+    "quantity": 167,
+    "retail_amount": 90800,
+    "ppvz_for_pay": 71500,
+    "delivery_rub": 13360,
+    "storage_fee": 980,
+    "penalty": 0
+  },
+  {
+    "nm_id": 222222,
+    "sa_name": "Куртка зимняя красная L",
+    "doc_type_name": "Продажа",
+    "quantity": 247,
+    "retail_amount": 143500,
+    "ppvz_for_pay": 118200,
+    "delivery_rub": 19760,
+    "storage_fee": 1450,
+    "penalty": 0
+  },
+  {
+    "nm_id": 333333,
+    "sa_name": "Шапка вязаная серая",
+    "doc_type_name": "Продажа",
+    "quantity": 28,
+    "retail_amount": 21900,
+    "ppvz_for_pay": 17600,
+    "delivery_rub": 2240,
+    "storage_fee": 210,
+    "penalty": 0
+  },
+  {
+    "nm_id": 444444,
+    "sa_name": "Шарф шерстяной бежевый",
+    "doc_type_name": "Продажа",
+    "quantity": 7,
+    "retail_amount": 20200,
+    "ppvz_for_pay": 15400,
+    "delivery_rub": 560,
+    "storage_fee": 90,
+    "penalty": 0
+  },
+  {
+    "nm_id": 222222,
+    "sa_name": "Куртка зимняя красная L",
+    "doc_type_name": "Возврат",
+    "quantity": 12,
+    "retail_amount": 6960,
+    "ppvz_for_pay": 5740,
+    "delivery_rub": 960,
+    "storage_fee": 0,
+    "penalty": 0
+  }
+]
