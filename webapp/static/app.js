@@ -111,7 +111,8 @@
       <section class="empty">
         <div class="empty__title">Не получилось загрузить данные</div>
         <p class="empty__text">${escapeHtml(message)}</p>
-        <button class="btn btn--primary btn--block" data-action="reload">Попробовать снова</button>
+        <button class="btn btn--primary btn--block" data-action="reload" style="margin-bottom:10px">Попробовать снова</button>
+        <button class="btn btn--ghost btn--block" data-action="reset-token">Подключить другой токен</button>
       </section>
     `;
   }
@@ -282,6 +283,15 @@
   content.addEventListener("click", (e) => {
     if (e.target.closest("[data-action='reload']")) {
       loadDashboard();
+      return;
+    }
+    if (e.target.closest("[data-action='reset-token']")) {
+      apiCall("/api/token", { method: "DELETE" })
+        .then(() => {
+          toast("Старый токен удалён, подключите новый");
+          loadDashboard();
+        })
+        .catch((err) => toast(err.message));
       return;
     }
     if (e.target.closest("[data-action='show-demo']")) {
