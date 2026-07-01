@@ -1,13 +1,12 @@
 """
 Простое хранилище на SQLite.
 
-Для прототипа этого достаточно. Перед реальным продакшен-использованием
-рекомендуется:
-  1. Шифровать поле wb_token (например, через cryptography.fernet),
-     ключ шифрования держать отдельно от базы (переменная окружения).
-  2. Не логировать токен ни при каких обстоятельствах.
-  3. Дать пользователю команду /forget для немедленного удаления токена.
+Для прототипа этого достаточно. Перед реальным продакшен-использованием:
+  1. Шифровать wb_token (cryptography.fernet), ключ держать в переменной окружения.
+  2. Не логировать токен.
+  3. Дать пользователю /forget для удаления токена.
 """
+import json
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
@@ -40,7 +39,25 @@ CREATE TABLE IF NOT EXISTS subscription_cache (
     is_subscribed INTEGER,
     checked_at INTEGER
 );
+
+CREATE TABLE IF NOT EXISTS dashboard_cache (
+    telegram_id INTEGER PRIMARY KEY,
+    payload TEXT,
+    cached_at INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS fetch_jobs (
+    telegram_id INTEGER PRIMARY KEY,
+    status TEXT,
+    error TEXT,
+    started_at INTEGER
+);
 """
+
+# статусы фоновой загрузки данных из WB
+JOB_PENDING = "pending"
+JOB_DONE = "done"
+JOB_ERROR = "error"
 
 
 def _ensure_dir() -> None:
@@ -58,6 +75,8 @@ def get_conn():
     finally:
         conn.close()
 
+
+# ---------- users / tokens ----------
 
 def save_token(telegram_id: int, token: str) -> None:
     with get_conn() as conn:
@@ -81,6 +100,8 @@ def forget_token(telegram_id: int) -> None:
         conn.execute("DELETE FROM users WHERE telegram_id = ?", (telegram_id,))
 
 
+# ---------- cost prices ----------
+
 def set_cost_price(telegram_id: int, nm_id: str, cost_price: float) -> None:
     with get_conn() as conn:
         conn.execute(
@@ -99,6 +120,8 @@ def get_cost_prices(telegram_id: int) -> dict[str, float]:
         return {nm_id: price for nm_id, price in rows}
 
 
+# ---------- ad spend ----------
+
 def set_ad_spend(telegram_id: int, nm_id: str, period: str, spend: float) -> None:
     with get_conn() as conn:
         conn.execute(
@@ -116,6 +139,8 @@ def get_ad_spend(telegram_id: int, period: str) -> dict[str, float]:
         ).fetchall()
         return {nm_id: spend for nm_id, spend in rows}
 
+
+# ---------- subscription cache ----------
 
 def get_subscription_cache(telegram_id: int) -> dict | None:
     with get_conn() as conn:
@@ -136,3 +161,55 @@ def set_subscription_cache(telegram_id: int, is_subscribed: bool, checked_at: in
             "checked_at = excluded.checked_at",
             (telegram_id, int(is_subscribed), checked_at),
         )
+
+
+# ---------- dashboard cache ----------
+
+def get_dashboard_cache(telegram_id: int) -> dict | None:
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT payload, cached_at FROM dashboard_cache WHERE telegram_id = ?",
+            (telegram_id,),
+        ).fetchone()
+        if not row:
+            return None
+        return {"payload": json.loads(row[0]), "cached_at": row[1]}
+
+
+def set_dashboard_cache(telegram_id: int, payload: dict, cached_at: int) -> None:
+    with get_conn() as conn:
+        conn.execute(
+            "INSERT INTO dashboard_cache (telegram_id, payload, cached_at) VALUES (?, ?, ?) "
+            "ON CONFLICT(telegram_id) DO UPDATE SET payload = excluded.payload, "
+            "cached_at = excluded.cached_at",
+            (telegram_id, json.dumps(payload, ensure_ascii=False), cached_at),
+        )
+
+
+# ---------- fetch jobs (фоновая загрузка из WB) ----------
+
+def get_fetch_job(telegram_id: int) -> dict | None:
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT status, error, started_at FROM fetch_jobs WHERE telegram_id = ?",
+            (telegram_id,),
+        ).fetchone()
+        if not row:
+            return None
+        return {"status": row[0], "error": row[1], "started_at": row[2]}
+
+
+def set_fetch_job(telegram_id: int, status: str, error: str | None = None) -> None:
+    import time
+    with get_conn() as conn:
+        conn.execute(
+            "INSERT INTO fetch_jobs (telegram_id, status, error, started_at) VALUES (?, ?, ?, ?) "
+            "ON CONFLICT(telegram_id) DO UPDATE SET status = excluded.status, "
+            "error = excluded.error, started_at = excluded.started_at",
+            (telegram_id, status, error, int(time.time())),
+        )
+
+
+def clear_fetch_job(telegram_id: int) -> None:
+    with get_conn() as conn:
+        conn.execute("DELETE FROM fetch_jobs WHERE telegram_id = ?", (telegram_id,))
