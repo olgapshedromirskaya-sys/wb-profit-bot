@@ -12,7 +12,7 @@ from typing import Optional
 from bot.diagnostics import CardDiagnosis, diagnose_cards_from_nm_report
 from bot.profit import SkuProfit, aggregate_profit_by_sku, total_profit
 
-DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+DATA_DIR = Path(__file__).resolve().parent / "static" / "data"
 
 
 def _sku_to_dict(s: SkuProfit, diag: Optional[CardDiagnosis]) -> dict:
