@@ -254,7 +254,7 @@
   }
 
   function openSettings() {
-    const connected = lastData && lastData.connected && !lastData.previewMode;
+    const connected = lastData && lastData.connected && !lastData.previewMode && !lastData.demo;
     openSheet(`
       <div class="sheet__title">Настройки</div>
       <div class="sheet__row">
@@ -264,8 +264,22 @@
       ${connected ? `
         <button id="refreshBtn" class="btn btn--ghost btn--block" style="margin-top:14px">Обновить данные (из WB)</button>
         <button id="disconnectBtn" class="btn btn--danger btn--block" style="margin-top:8px">Отключить кабинет</button>
-      ` : `<p class="empty__text" style="margin-top:14px">Открой приложение и вставь токен, чтобы подключить кабинет.</p>`}
+      ` : `
+        <p style="font-size:13px;color:var(--hint);margin:12px 0 8px">
+          Личный кабинет WB → Настройки → Доступ к API → создайте токен
+          с правами «Статистика» и «Аналитика» → вставьте сюда.
+        </p>
+        <form id="settingsTokenForm" style="display:flex;flex-direction:column;gap:10px">
+          <textarea name="token" placeholder="Вставьте токен API Wildberries"
+            style="border:1px solid var(--line);border-radius:8px;padding:10px 12px;
+                   font-family:'IBM Plex Mono',monospace;font-size:13px;
+                   background:var(--bg-secondary);color:var(--ink);
+                   resize:vertical;min-height:64px" required></textarea>
+          <button type="submit" class="btn btn--primary btn--block">Подключить</button>
+        </form>
+      `}
     `);
+
     if (connected) {
       document.getElementById("refreshBtn").addEventListener("click", async () => {
         closeSheet();
@@ -293,6 +307,25 @@
           loadDashboard();
         } catch (err) {
           toast(err.message);
+        }
+      });
+    } else {
+      document.getElementById("settingsTokenForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const token = new FormData(e.target).get("token").trim();
+        if (!token) return;
+        const btn = e.target.querySelector("button[type=submit]");
+        btn.textContent = "Подключаем…";
+        btn.disabled = true;
+        try {
+          await apiCall("/api/token", { method: "POST", body: { token } });
+          closeSheet();
+          toast("Кабинет подключён, загружаем данные…");
+          loadDashboard();
+        } catch (err) {
+          toast(err.message);
+          btn.textContent = "Подключить";
+          btn.disabled = false;
         }
       });
     }
