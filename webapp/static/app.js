@@ -204,6 +204,8 @@
       banner = `<div class="banner">Это пример на демо-данных — открой приложение из Telegram, чтобы увидеть свои реальные цифры.</div>`;
     } else if (data.demo) {
       banner = `<div class="banner">Сейчас показаны демо-данные. Подключи свой кабинет в настройках ⚙, чтобы увидеть реальную прибыль.</div>`;
+    } else if (data.cached) {
+      banner = `<div class="banner">Данные из кэша — чтобы обновить, нажмите ⚙ → «Обновить данные».</div>`;
     }
 
     content.innerHTML = `
@@ -259,9 +261,30 @@
         <span>Кабинет WB</span>
         <span>${connected ? "подключён" : "не подключён"}</span>
       </div>
-      ${connected ? `<button id="disconnectBtn" class="btn btn--danger btn--block" style="margin-top:14px">Отключить кабинет</button>` : `<p class="empty__text" style="margin-top:14px">Открой приложение и вставь токен, чтобы подключить кабинет.</p>`}
+      ${connected ? `
+        <button id="refreshBtn" class="btn btn--ghost btn--block" style="margin-top:14px">Обновить данные (из WB)</button>
+        <button id="disconnectBtn" class="btn btn--danger btn--block" style="margin-top:8px">Отключить кабинет</button>
+      ` : `<p class="empty__text" style="margin-top:14px">Открой приложение и вставь токен, чтобы подключить кабинет.</p>`}
     `);
     if (connected) {
+      document.getElementById("refreshBtn").addEventListener("click", async () => {
+        closeSheet();
+        try {
+          const res = await apiCall("/api/dashboard/refresh", { method: "POST" });
+          if (res.status === "pending") {
+            renderPending(res.message);
+          } else {
+            renderDashboard(res);
+            toast("Данные обновлены из WB");
+          }
+        } catch (err) {
+          if (err.status === 429) {
+            toast(err.message);
+          } else {
+            renderError(err.message);
+          }
+        }
+      });
       document.getElementById("disconnectBtn").addEventListener("click", async () => {
         try {
           await apiCall("/api/token", { method: "DELETE" });
@@ -346,19 +369,43 @@
 
   // ---------- bootstrap ----------
 
+  let _pollTimer = null;
+
+  function _stopPolling() {
+    if (_pollTimer) { clearTimeout(_pollTimer); _pollTimer = null; }
+  }
+
+  function renderPending(message) {
+    _stopPolling();
+    content.innerHTML = `
+      <div class="skeleton skeleton--hero"></div>
+      <div class="banner" style="text-align:center">
+        <span style="display:inline-block;animation:spin 1s linear infinite;margin-right:6px">⏳</span>
+        ${escapeHtml(message || "Загружаем данные из Wildberries…")}
+      </div>
+      <div class="skeleton skeleton--row"></div>
+      <div class="skeleton skeleton--row"></div>
+      <div class="skeleton skeleton--row"></div>
+      <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+    `;
+    // Опрашиваем каждые 3 секунды
+    _pollTimer = setTimeout(loadDashboard, 3000);
+  }
+
   async function loadDashboard() {
+    _stopPolling();
     renderLoading();
     try {
       let data;
       if (initData) {
         data = await apiCall("/api/dashboard");
       } else {
-        // Открыто не из Telegram (например, для разработки в браузере) —
-        // показываем демо-данные без авторизации.
         data = await apiCall("/api/demo");
         data.previewMode = true;
       }
-      if (data.connected === false) {
+      if (data.status === "pending") {
+        renderPending(data.message);
+      } else if (data.connected === false) {
         renderConnectPrompt();
       } else {
         renderDashboard(data);
@@ -371,6 +418,9 @@
       }
     }
   }
+
+  // При закрытии/скрытии Mini App останавливаем polling, чтобы не тратить ресурсы
+  if (tg) tg.onEvent("viewportChanged", () => { if (!tg.isExpanded) _stopPolling(); });
 
   loadDashboard();
 })();
