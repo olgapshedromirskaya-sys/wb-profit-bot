@@ -57,6 +57,12 @@ CHANNEL_URL = os.getenv("CHANNEL_URL", "")
 # дашборд. 1800 (30 минут) — разумный баланс для лид-магнита.
 SUBSCRIPTION_CACHE_SECONDS = int(os.getenv("SUBSCRIPTION_CACHE_SECONDS", "1800"))
 
+# Сколько секунд кэшировать результат дашборда от WB API.
+# За это время повторные открытия мини-аппа отдают закэшированный ответ,
+# не дёргая WB. При нажатии «Обновить» в настройках кэш сбрасывается принудительно.
+# 1800 = 30 минут — хороший баланс между свежестью данных и нагрузкой на API.
+DASHBOARD_CACHE_SECONDS = int(os.getenv("DASHBOARD_CACHE_SECONDS", "1800"))
+
 TELEGRAM_API_BASE = "https://api.telegram.org"
 
 # Дефолтные ориентиры конверсии воронки для диагностики карточек.
